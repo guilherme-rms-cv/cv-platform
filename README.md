@@ -1,1 +1,42 @@
-# cv-platform
+# Interactive Learning Platform API
+
+Backend API for an interactive educational platform focused on:
+
+- Image Processing
+- Computer Vision
+- Computer Graphics
+
+## Technologies
+
+- Python
+- FastAPI
+
+## Running locally
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+## Intial Structure
+
+backend/
+├── app/
+│   ├── __init__.py
+│   │
+│   ├── main.py
+│   │
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── health.py
+│   │
+│   └── core/
+│       └── __init__.py
+│
+├── tests/
+│   └── __init__.py
+│
+├── requirements.txt
+├── .gitignore
+└── README.md

@@ -19,6 +19,27 @@ Create and activate a virtual environment:
 python -m venv .venv
 ```
 
+Install backend dependencies and run API:
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Run frontend (no build step required):
+
+```bash
+cd ..
+python3 -m http.server 5500
+```
+
+Open:
+
+- Frontend lab: http://127.0.0.1:5500/frontend/
+- API docs: http://127.0.0.1:8000/docs
+
 ## Implemented endpoints
 
 - GET /api/v1/health

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CV Platform Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="layout">
+      <header class="hero card reveal-1">
+        <p class="eyebrow">CV PLATFORM</p>
+        <h1>Image Processing Playground</h1>
+        <p class="subtitle">
+          Upload one image, pick an algorithm, tune parameters, and compare output instantly.
+        </p>
+      </header>
+
+      <section class="controls card reveal-2">
+        <h2>Experiment Controls</h2>
+
+        <div class="field">
+          <label for="apiBase">API base URL</label>
+          <input id="apiBase" type="text" value="http://127.0.0.1:8000" />
+        </div>
+
+        <div class="field">
+          <label for="fileInput">Image file (PNG/JPG)</label>
+          <input id="fileInput" type="file" accept="image/png,image/jpeg,image/jpg" />
+        </div>
+
+        <div class="field">
+          <label for="algorithm">Algorithm</label>
+          <select id="algorithm">
+            <option value="grayscale">Grayscale</option>
+            <option value="gaussian">Gaussian Blur</option>
+          </select>
+        </div>
+
+        <div id="gaussianGroup" class="gaussian-grid" aria-live="polite">
+          <div class="field">
+            <label for="kernelSize">Kernel size (odd, > 1)</label>
+            <input id="kernelSize" type="number" min="3" step="2" value="3" />
+          </div>
+          <div class="field">
+            <label for="sigma">Sigma (>= 0)</label>
+            <input id="sigma" type="number" min="0" step="0.1" value="1.2" />
+          </div>
+        </div>
+
+        <button id="runBtn" class="run-btn" type="button">Run Algorithm</button>
+        <p id="status" class="status" role="status"></p>
+      </section>
+
+      <section class="results card reveal-3">
+        <h2>Visual Comparison</h2>
+        <div class="images-grid">
+          <figure>
+            <figcaption>Original</figcaption>
+            <img id="originalPreview" alt="Original preview" />
+          </figure>
+          <figure>
+            <figcaption>Result</figcaption>
+            <img id="resultPreview" alt="Processed image result" />
+          </figure>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

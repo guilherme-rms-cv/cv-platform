@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.image_processing import router as image_processing_router
 
 
 app = FastAPI(
@@ -14,5 +15,10 @@ app = FastAPI(
 
 app.include_router(
     health_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    image_processing_router,
     prefix="/api/v1",
 )

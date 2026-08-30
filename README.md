@@ -19,8 +19,20 @@ Create and activate a virtual environment:
 python -m venv .venv
 ```
 
+## Implemented endpoints
+
+- GET /api/v1/health
+- POST /api/v1/image-processing/grayscale
+- POST /api/v1/image-processing/blur/gaussian
+
+Gaussian blur parameters:
+
+- kernel_size: odd integer greater than 1
+- sigma: float greater than or equal to 0
+
 ## Intial Structure
 
+```bash
 backend/
 ├── app/
 │   ├── __init__.py
@@ -40,3 +52,4 @@ backend/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
+```

@@ -4,4 +4,4 @@ numpy
 opencv-python-headless
 python-multipart
 pytest
-httpx
+httpx2

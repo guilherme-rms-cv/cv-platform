@@ -46,6 +46,7 @@ Open:
 - POST /api/v1/image-processing/grayscale
 - POST /api/v1/image-processing/blur/gaussian
 - POST /api/v1/image-processing/edges/sobel
+- POST /api/v1/image-processing/edges/canny
 
 Gaussian blur parameters:
 
@@ -55,6 +56,12 @@ Gaussian blur parameters:
 Sobel parameters:
 
 - kernel_size: one of 1, 3, 5, 7
+
+Canny parameters:
+
+- threshold1: float between 0 and 255
+- threshold2: float between 0 and 255
+- rule: threshold1 must be lower than threshold2
 
 ## Intial Structure
 

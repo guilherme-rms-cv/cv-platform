@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from app.services.image_processing.filters import (
+    canny_edges_from_bytes,
     InvalidImageError,
     gaussian_blur_from_bytes,
     grayscale_from_bytes,
@@ -90,6 +91,36 @@ async def sobel_edges(
 
     try:
         output = sobel_edges_from_bytes(image_bytes, kernel_size=kernel_size)
+    except InvalidImageError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return Response(content=output, media_type="image/png")
+
+
+@router.post("/image-processing/edges/canny")
+async def canny_edges(
+    file: UploadFile = File(...),
+    threshold1: float = Query(..., ge=0.0, le=255.0),
+    threshold2: float = Query(..., ge=0.0, le=255.0),
+):
+    _validate_image_upload(file)
+
+    if threshold1 >= threshold2:
+        raise HTTPException(
+            status_code=400,
+            detail="threshold1 must be lower than threshold2",
+        )
+
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty file uploaded")
+
+    try:
+        output = canny_edges_from_bytes(
+            image_bytes,
+            threshold1=threshold1,
+            threshold2=threshold2,
+        )
     except InvalidImageError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

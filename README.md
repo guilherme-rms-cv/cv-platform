@@ -45,11 +45,16 @@ Open:
 - GET /api/v1/health
 - POST /api/v1/image-processing/grayscale
 - POST /api/v1/image-processing/blur/gaussian
+- POST /api/v1/image-processing/edges/sobel
 
 Gaussian blur parameters:
 
 - kernel_size: odd integer greater than 1
 - sigma: float greater than or equal to 0
+
+Sobel parameters:
+
+- kernel_size: one of 1, 3, 5, 7
 
 ## Intial Structure
 

@@ -3,9 +3,12 @@ const fileInput = document.getElementById("fileInput");
 const algorithmSelect = document.getElementById("algorithm");
 const gaussianGroup = document.getElementById("gaussianGroup");
 const sobelGroup = document.getElementById("sobelGroup");
+const cannyGroup = document.getElementById("cannyGroup");
 const kernelSizeInput = document.getElementById("kernelSize");
 const sigmaInput = document.getElementById("sigma");
 const sobelKernelSizeInput = document.getElementById("sobelKernelSize");
+const cannyThreshold1Input = document.getElementById("cannyThreshold1");
+const cannyThreshold2Input = document.getElementById("cannyThreshold2");
 const runBtn = document.getElementById("runBtn");
 const statusEl = document.getElementById("status");
 const originalPreview = document.getElementById("originalPreview");
@@ -20,6 +23,26 @@ function updateGaussianVisibility() {
   const selected = algorithmSelect.value;
   gaussianGroup.hidden = selected !== "gaussian";
   sobelGroup.hidden = selected !== "sobel";
+  cannyGroup.hidden = selected !== "canny";
+}
+
+function validateCannyParams() {
+  const threshold1 = Number(cannyThreshold1Input.value);
+  const threshold2 = Number(cannyThreshold2Input.value);
+
+  if (Number.isNaN(threshold1) || threshold1 < 0 || threshold1 > 255) {
+    throw new Error("threshold1 must be between 0 and 255");
+  }
+
+  if (Number.isNaN(threshold2) || threshold2 < 0 || threshold2 > 255) {
+    throw new Error("threshold2 must be between 0 and 255");
+  }
+
+  if (threshold1 >= threshold2) {
+    throw new Error("threshold1 must be lower than threshold2");
+  }
+
+  return { threshold1, threshold2 };
 }
 
 function validateGaussianParams() {
@@ -55,6 +78,16 @@ function buildEndpoint() {
     });
 
     return `${base}/api/v1/image-processing/edges/sobel?${query.toString()}`;
+  }
+
+  if (algorithmSelect.value === "canny") {
+    const { threshold1, threshold2 } = validateCannyParams();
+    const query = new URLSearchParams({
+      threshold1: String(threshold1),
+      threshold2: String(threshold2),
+    });
+
+    return `${base}/api/v1/image-processing/edges/canny?${query.toString()}`;
   }
 
   const { kernelSize, sigma } = validateGaussianParams();
@@ -112,6 +145,8 @@ async function runAlgorithm() {
     const algoLabel =
       algorithmSelect.value === "sobel"
         ? "Sobel"
+        : algorithmSelect.value === "canny"
+          ? "Canny"
         : algorithmSelect.value === "gaussian"
           ? "Gaussian Blur"
           : "Grayscale";

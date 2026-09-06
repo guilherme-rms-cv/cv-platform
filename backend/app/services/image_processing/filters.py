@@ -65,3 +65,22 @@ def sobel_edges_from_bytes(image_bytes: bytes, kernel_size: int) -> bytes:
         raise RuntimeError("Failed to encode Sobel edge image")
 
     return encoded.tobytes()
+
+
+def canny_edges_from_bytes(image_bytes: bytes, threshold1: float, threshold2: float) -> bytes:
+    """Apply Canny edge detection to an encoded image and return PNG bytes."""
+    image_array = np.frombuffer(image_bytes, dtype=np.uint8)
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    if image is None:
+        raise InvalidImageError("Invalid or unsupported image file")
+
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    smoothed = cv2.GaussianBlur(gray_image, (5, 5), sigmaX=1.2)
+    edges = cv2.Canny(smoothed, threshold1=threshold1, threshold2=threshold2)
+
+    ok, encoded = cv2.imencode(".png", edges)
+    if not ok:
+        raise RuntimeError("Failed to encode Canny edge image")
+
+    return encoded.tobytes()

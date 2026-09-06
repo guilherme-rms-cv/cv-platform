@@ -2,8 +2,10 @@ const apiBaseInput = document.getElementById("apiBase");
 const fileInput = document.getElementById("fileInput");
 const algorithmSelect = document.getElementById("algorithm");
 const gaussianGroup = document.getElementById("gaussianGroup");
+const sobelGroup = document.getElementById("sobelGroup");
 const kernelSizeInput = document.getElementById("kernelSize");
 const sigmaInput = document.getElementById("sigma");
+const sobelKernelSizeInput = document.getElementById("sobelKernelSize");
 const runBtn = document.getElementById("runBtn");
 const statusEl = document.getElementById("status");
 const originalPreview = document.getElementById("originalPreview");
@@ -15,7 +17,9 @@ function setStatus(message, type = "info") {
 }
 
 function updateGaussianVisibility() {
-  gaussianGroup.hidden = algorithmSelect.value !== "gaussian";
+  const selected = algorithmSelect.value;
+  gaussianGroup.hidden = selected !== "gaussian";
+  sobelGroup.hidden = selected !== "sobel";
 }
 
 function validateGaussianParams() {
@@ -38,6 +42,19 @@ function buildEndpoint() {
 
   if (algorithmSelect.value === "grayscale") {
     return `${base}/api/v1/image-processing/grayscale`;
+  }
+
+  if (algorithmSelect.value === "sobel") {
+    const kernelSize = Number(sobelKernelSizeInput.value);
+    if (!Number.isInteger(kernelSize) || ![1, 3, 5, 7].includes(kernelSize)) {
+      throw new Error("kernel_size must be one of: 1, 3, 5, 7");
+    }
+
+    const query = new URLSearchParams({
+      kernel_size: String(kernelSize),
+    });
+
+    return `${base}/api/v1/image-processing/edges/sobel?${query.toString()}`;
   }
 
   const { kernelSize, sigma } = validateGaussianParams();
@@ -92,7 +109,13 @@ async function runAlgorithm() {
 
     const resultBlob = await response.blob();
     resultPreview.src = URL.createObjectURL(resultBlob);
-    setStatus("Done. Compare original and result side by side.", "ok");
+    const algoLabel =
+      algorithmSelect.value === "sobel"
+        ? "Sobel"
+        : algorithmSelect.value === "gaussian"
+          ? "Gaussian Blur"
+          : "Grayscale";
+    setStatus(`Done using ${algoLabel}. Compare original and result side by side.`, "ok");
   } catch (error) {
     setStatus(error.message || "Unexpected error while processing.", "error");
   } finally {
@@ -102,6 +125,7 @@ async function runAlgorithm() {
 
 algorithmSelect.addEventListener("change", updateGaussianVisibility);
 runBtn.addEventListener("click", runAlgorithm);
+window.addEventListener("pageshow", updateGaussianVisibility);
 
 updateGaussianVisibility();
 setStatus("Ready. Upload an image and run an algorithm.");

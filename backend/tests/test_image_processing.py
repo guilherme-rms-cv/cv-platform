@@ -111,6 +111,18 @@ def test_sobel_rejects_even_kernel_size():
     assert "kernel_size must be an odd integer" in response.json()["detail"]
 
 
+def test_sobel_rejects_kernel_size_outside_allowed_set():
+    payload = _build_test_png(width=60, height=60)
+
+    response = client.post(
+        "/api/v1/image-processing/edges/sobel?kernel_size=9",
+        files={"file": ("sample.png", payload, "image/png")},
+    )
+
+    assert response.status_code == 400
+    assert "kernel_size must be one of: 1, 3, 5, 7" in response.json()["detail"]
+
+
 def test_canny_success_returns_png_image():
     payload = _build_test_png(width=60, height=60)
 

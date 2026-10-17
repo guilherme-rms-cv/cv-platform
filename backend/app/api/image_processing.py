@@ -1,9 +1,15 @@
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
+from app.services.image_processing.constraints import ALLOWED_CONTENT_TYPES
+from app.services.image_processing.errors import (
+    EmptyFileError,
+    InvalidImageError,
+    InvalidImageSizeError,
+    UnsupportedContentTypeError,
+)
 from app.services.image_processing.filters import (
     canny_edges_from_bytes,
-    InvalidImageError,
     gaussian_blur_from_bytes,
     grayscale_from_bytes,
     sobel_edges_from_bytes,
@@ -13,29 +19,30 @@ router = APIRouter(
     tags=["Image Processing"],
 )
 
-_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/jpg"}
+def _validate_content_type(file: UploadFile) -> None:
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise UnsupportedContentTypeError()
 
 
-def _validate_image_upload(file: UploadFile) -> None:
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported file type. Use PNG or JPEG/JPG.",
-        )
+async def _read_upload_image_bytes(file: UploadFile) -> bytes:
+    _validate_content_type(file)
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise EmptyFileError()
+    return image_bytes
+
+
+def _as_bad_request(exc: Exception) -> HTTPException:
+    return HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/image-processing/grayscale")
 async def grayscale(file: UploadFile = File(...)):
-    _validate_image_upload(file)
-
-    image_bytes = await file.read()
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-
     try:
+        image_bytes = await _read_upload_image_bytes(file)
         output = grayscale_from_bytes(image_bytes)
-    except InvalidImageError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")
 
@@ -46,22 +53,17 @@ async def gaussian_blur(
     kernel_size: int = Query(..., gt=1),
     sigma: float = Query(..., ge=0.0),
 ):
-    _validate_image_upload(file)
-
     if kernel_size % 2 == 0:
         raise HTTPException(
             status_code=400,
             detail="kernel_size must be an odd integer greater than 1",
         )
 
-    image_bytes = await file.read()
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-
     try:
+        image_bytes = await _read_upload_image_bytes(file)
         output = gaussian_blur_from_bytes(image_bytes, kernel_size=kernel_size, sigma=sigma)
-    except InvalidImageError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")
 
@@ -71,8 +73,6 @@ async def sobel_edges(
     file: UploadFile = File(...),
     kernel_size: int = Query(3, ge=1),
 ):
-    _validate_image_upload(file)
-
     if kernel_size % 2 == 0:
         raise HTTPException(
             status_code=400,
@@ -85,14 +85,11 @@ async def sobel_edges(
             detail="kernel_size must be one of: 1, 3, 5, 7",
         )
 
-    image_bytes = await file.read()
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-
     try:
+        image_bytes = await _read_upload_image_bytes(file)
         output = sobel_edges_from_bytes(image_bytes, kernel_size=kernel_size)
-    except InvalidImageError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")
 
@@ -103,25 +100,20 @@ async def canny_edges(
     threshold1: float = Query(..., ge=0.0, le=255.0),
     threshold2: float = Query(..., ge=0.0, le=255.0),
 ):
-    _validate_image_upload(file)
-
     if threshold1 >= threshold2:
         raise HTTPException(
             status_code=400,
             detail="threshold1 must be lower than threshold2",
         )
 
-    image_bytes = await file.read()
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-
     try:
+        image_bytes = await _read_upload_image_bytes(file)
         output = canny_edges_from_bytes(
             image_bytes,
             threshold1=threshold1,
             threshold2=threshold2,
         )
-    except InvalidImageError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")

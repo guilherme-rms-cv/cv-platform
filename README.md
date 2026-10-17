@@ -48,6 +48,11 @@ Open:
 - POST /api/v1/image-processing/edges/sobel
 - POST /api/v1/image-processing/edges/canny
 
+Global image constraints for all Image Processing endpoints:
+
+- minimum size: 50x50 pixels
+- maximum size: 200x200 pixels
+
 Gaussian blur parameters:
 
 - kernel_size: odd integer greater than 1

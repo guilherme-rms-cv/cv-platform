@@ -14,6 +14,10 @@ from app.services.image_processing.filters import (
     grayscale_from_bytes,
     sobel_edges_from_bytes,
 )
+from app.services.image_processing.fundamentals import (
+    image_metadata_from_bytes,
+    kernel_window_from_bytes,
+)
 
 router = APIRouter(
     tags=["Image Processing"],
@@ -117,3 +121,43 @@ async def canny_edges(
         raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")
+
+
+@router.post("/image-processing/fundamentals/metadata")
+async def fundamentals_metadata(file: UploadFile = File(...)):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        metadata = image_metadata_from_bytes(image_bytes)
+    except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
+
+    return metadata
+
+
+@router.post("/image-processing/fundamentals/kernel-window")
+async def fundamentals_kernel_window(
+    file: UploadFile = File(...),
+    kernel_size: int = Query(3, ge=3),
+    x: int = Query(0, ge=0),
+    y: int = Query(0, ge=0),
+    mode: str = Query("kernel"),
+):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        payload = kernel_window_from_bytes(
+            image_bytes=image_bytes,
+            kernel_size=kernel_size,
+            x=x,
+            y=y,
+            mode=mode,
+        )
+    except (
+        UnsupportedContentTypeError,
+        EmptyFileError,
+        InvalidImageError,
+        InvalidImageSizeError,
+        ValueError,
+    ) as exc:
+        raise _as_bad_request(exc) from exc
+
+    return payload

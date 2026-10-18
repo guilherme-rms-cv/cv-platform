@@ -14,6 +14,10 @@ from app.services.image_processing.filters import (
     grayscale_from_bytes,
     sobel_edges_from_bytes,
 )
+from app.services.image_processing.channels import (
+    convert_color_space_from_bytes,
+    extract_channel_from_bytes,
+)
 from app.services.image_processing.fundamentals import (
     image_metadata_from_bytes,
     kernel_window_from_bytes,
@@ -118,6 +122,46 @@ async def canny_edges(
             threshold2=threshold2,
         )
     except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
+
+    return Response(content=output, media_type="image/png")
+
+
+@router.post("/image-processing/channels/convert")
+async def channels_convert(
+    file: UploadFile = File(...),
+    target: str = Query(...),
+):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        output = convert_color_space_from_bytes(image_bytes=image_bytes, target=target)
+    except (
+        UnsupportedContentTypeError,
+        EmptyFileError,
+        InvalidImageError,
+        InvalidImageSizeError,
+        ValueError,
+    ) as exc:
+        raise _as_bad_request(exc) from exc
+
+    return Response(content=output, media_type="image/png")
+
+
+@router.post("/image-processing/channels/extract")
+async def channels_extract(
+    file: UploadFile = File(...),
+    channel_id: str = Query(...),
+):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        output = extract_channel_from_bytes(image_bytes=image_bytes, channel_id=channel_id)
+    except (
+        UnsupportedContentTypeError,
+        EmptyFileError,
+        InvalidImageError,
+        InvalidImageSizeError,
+        ValueError,
+    ) as exc:
         raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")

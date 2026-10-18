@@ -9,6 +9,7 @@ from app.services.image_processing.errors import (
     UnsupportedContentTypeError,
 )
 from app.services.image_processing.filters import (
+    apply_filter_from_bytes,
     canny_edges_from_bytes,
     gaussian_blur_from_bytes,
     grayscale_from_bytes,
@@ -122,6 +123,43 @@ async def canny_edges(
             threshold2=threshold2,
         )
     except (UnsupportedContentTypeError, EmptyFileError, InvalidImageError, InvalidImageSizeError) as exc:
+        raise _as_bad_request(exc) from exc
+
+    return Response(content=output, media_type="image/png")
+
+
+@router.post("/image-processing/filters/apply")
+async def filters_apply(
+    file: UploadFile = File(...),
+    filter_id: str = Query(...),
+    kernel_size: int = Query(3, ge=1),
+    sigma: float = Query(1.2, ge=0.0),
+    sigma2: float = Query(2.4, ge=0.0),
+    amount: float = Query(1.0, ge=0.0),
+    d: int = Query(5, ge=0),
+    sigma_color: float = Query(75.0, ge=0.0),
+    sigma_space: float = Query(75.0, ge=0.0),
+):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        output = apply_filter_from_bytes(
+            image_bytes=image_bytes,
+            filter_id=filter_id,
+            kernel_size=kernel_size,
+            sigma=sigma,
+            sigma2=sigma2,
+            amount=amount,
+            d=d,
+            sigma_color=sigma_color,
+            sigma_space=sigma_space,
+        )
+    except (
+        UnsupportedContentTypeError,
+        EmptyFileError,
+        InvalidImageError,
+        InvalidImageSizeError,
+        ValueError,
+    ) as exc:
         raise _as_bad_request(exc) from exc
 
     return Response(content=output, media_type="image/png")

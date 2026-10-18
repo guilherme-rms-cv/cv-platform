@@ -23,6 +23,10 @@ from app.services.image_processing.fundamentals import (
     image_metadata_from_bytes,
     kernel_window_from_bytes,
 )
+from app.services.image_processing.thresholding import (
+    apply_threshold_from_bytes,
+    is_binary_output_method,
+)
 
 router = APIRouter(
     tags=["Image Processing"],
@@ -243,3 +247,35 @@ async def fundamentals_kernel_window(
         raise _as_bad_request(exc) from exc
 
     return payload
+
+
+@router.post("/image-processing/thresholding/apply")
+async def thresholding_apply(
+    file: UploadFile = File(...),
+    method: str = Query(...),
+    threshold: float = Query(127.0, ge=0.0, le=255.0),
+    max_value: float = Query(255.0, ge=0.0, le=255.0),
+    block_size: int = Query(11, ge=3),
+    c: float = Query(2.0),
+):
+    try:
+        image_bytes = await _read_upload_image_bytes(file)
+        output = apply_threshold_from_bytes(
+            image_bytes=image_bytes,
+            method=method,
+            threshold=threshold,
+            max_value=max_value,
+            block_size=block_size,
+            c=c,
+        )
+    except (
+        UnsupportedContentTypeError,
+        EmptyFileError,
+        InvalidImageError,
+        InvalidImageSizeError,
+        ValueError,
+    ) as exc:
+        raise _as_bad_request(exc) from exc
+
+    headers = {"X-Binary-Output": "true" if is_binary_output_method(method) else "false"}
+    return Response(content=output, media_type="image/png", headers=headers)

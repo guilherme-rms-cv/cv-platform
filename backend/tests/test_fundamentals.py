@@ -1,3 +1,5 @@
+import base64
+
 import cv2
 import numpy as np
 from fastapi.testclient import TestClient
@@ -51,6 +53,15 @@ def test_fundamentals_kernel_window_success():
     assert len(body["window"]) == 3
     assert len(body["window"][0]) == 3
     assert len(body["window"][0][0]) == 3
+    assert body["window_image_mime_type"] == "image/png"
+    assert isinstance(body["window_image_base64"], str)
+    decoded_window = cv2.imdecode(
+        np.frombuffer(base64.b64decode(body["window_image_base64"]), dtype=np.uint8),
+        cv2.IMREAD_UNCHANGED,
+    )
+    assert decoded_window is not None
+    assert decoded_window.shape[0] == 3
+    assert decoded_window.shape[1] == 3
 
 
 def test_fundamentals_kernel_window_full_mode_success():
